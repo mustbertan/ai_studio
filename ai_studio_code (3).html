@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Forge2D | AI Live Sync Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: white; padding: 40px; }
+        .task-card { background: #1e293b; padding: 15px; margin: 10px 0; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; border-left: 5px solid #38bdf8; }
+        .completed { border-left-color: #22c55e; opacity: 0.6; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #ef4444; }
+        .completed .status-dot { background: #22c55e; }
+        .header { border-bottom: 2px solid #38bdf8; margin-bottom: 30px; }
+        .ai-instructions { background: #1e1b4b; border: 1px dashed #38bdf8; padding: 15px; font-size: 0.9em; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>FORGE2D <span style="font-weight: 200;">AI Live Tracker</span></h1>
+    <p>AI bir adımı bitirdiğinde burası otomatik olarak yeşile döner.</p>
+</div>
+
+<div class="ai-instructions">
+    <strong>Yapay Zekaya Verilecek Bilgi:</strong><br>
+    Supabase URL: <code id="display-url">YÜKLENİYOR...</code><br>
+    API Key: <code id="display-key">YÜKLENİYOR...</code><br>
+    Tablo: <code>forge2d_tasks</code> | Sütunlar: <code>task_key</code>, <code>is_completed</code>
+</div>
+
+<div id="task-container">Yükleniyor...</div>
+
+<script>
+    // SUPABASE AYARLARIN - BURAYI DOLDUR
+    const SUPABASE_URL = 'SENİN_SUPABASE_URL_ADRESİN';
+    const SUPABASE_KEY = 'SENİN_SUPABASE_ANON_KEY_ADRESİN';
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.getElementById('display-url').innerText = SUPABASE_URL;
+    document.getElementById('display-key').innerText = SUPABASE_KEY;
+
+    async function loadTasks() {
+        const { data, error } = await supabase.from('forge2d_tasks').select('*').order('id', { ascending: true });
+        if (error) return;
+
+        const container = document.getElementById('task-container');
+        container.innerHTML = '';
+
+        data.forEach(task => {
+            const div = document.createElement('div');
+            div.className = `task-card ${task.is_completed ? 'completed' : ''}`;
+            div.innerHTML = `
+                <div>
+                    <strong>[${task.phase}]</strong> ${task.label} <br>
+                    <small style="color:gray">Key: ${task.task_key}</small>
+                </div>
+                <div class="status-dot"></div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Gerçek zamanlı dinleme (AI işaretlediği an sayfa yenilenmeden değişir)
+    supabase.channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'forge2d_tasks' }, () => {
+        loadTasks();
+    }).subscribe();
+
+    loadTasks();
+</script>
+</body>
+</html>
