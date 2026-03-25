@@ -3,262 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forge2D | AI Development Dashboard (LIVE)</title>
+    <title>Forge2D | AI Agent Control Tower</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
+            --bg: #020617;
             --card-bg: #1e293b;
-            --accent: #38bdf8;
-            --text-main: #f1f5f9;
-            --text-dim: #94a3b8;
+            --accent: #0ea5e9;
             --success: #22c55e;
-            --warning: #f59e0b;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        header {
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .project-meta {
-            background: var(--card-bg);
+        /* Sol Panel: Proje Özeti ve Kurallar */
+        .sidebar {
+            width: 350px;
+            background: #0f172a;
+            border-right: 1px solid #334155;
             padding: 20px;
-            border-radius: 12px;
-            border-left: 5px solid var(--accent);
-            margin-bottom: 30px;
-        }
-
-        /* AI için özel bilgi alanı */
-        .ai-secret-box {
-            background: #1e1b4b;
-            border: 1px dashed var(--accent);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-
-        .step-grid {
-            display: grid;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
 
-        .phase-card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.2s;
+        /* Ana İçerik: Görev Listesi */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: radial-gradient(circle at top right, #1e1b4b, #020617);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-native { background: #4f46e5; color: white; }
+        .badge-ai { background: #db2777; color: white; }
+
+        .project-header h1 {
+            color: var(--accent);
+            margin: 0;
+            font-size: 1.8rem;
+            letter-spacing: -1px;
+        }
+
+        .protocol-box {
+            background: #450a0a;
+            border: 1px solid #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .tech-spec-item {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .phase-container {
+            margin-bottom: 30px;
         }
 
         .phase-title {
-            font-size: 1.25rem;
-            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: bold;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 10px;
+            color: var(--text-dim);
         }
 
-        .task-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .task-item {
+        .task-card {
+            background: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 10px;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .task-card.completed {
+            border-color: var(--success);
+            background: #064e3b44;
+            opacity: 0.7;
+        }
+
+        .task-card.current {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
+            background: #0c4a6e44;
+            transform: scale(1.02);
+        }
+
+        .task-info { flex: 1; }
+        .task-info h4 { margin: 0; font-size: 1rem; }
+        .task-info p { margin: 5px 0 0 0; font-size: 0.8rem; color: var(--text-dim); }
+
+        .checkbox-custom {
+            width: 24px;
+            height: 24px;
             border-radius: 6px;
-            transition: background 0.2s;
-        }
-
-        .task-item.completed {
-            opacity: 0.6;
-            color: var(--success);
-        }
-
-        .task-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--success);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
         }
 
-        .tech-stack span {
-            display: inline-block;
-            background: #475569;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            margin-right: 5px;
-            margin-top: 5px;
-        }
-
-        .copy-prompt-btn {
+        .copy-all-btn {
             background: var(--accent);
-            color: var(--bg-color);
+            color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: opacity 0.2s;
         }
 
-        .warning-box {
-            background: #450a0a;
-            border: 1px solid #dc2626;
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
+        .copy-all-btn:hover { opacity: 0.9; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div>
-            <h1>FORGE2D <span style="font-weight: 200;">| AI Development Dashboard</span></h1>
-            <p style="color: var(--text-dim);">Canlı Veritabanı ve AI Senkronizasyonu Aktif</p>
+    <!-- SIDEBAR: SİSTEM TALİMATLARI VE BAĞLAM -->
+    <aside class="sidebar">
+        <div class="project-header">
+            <span class="badge badge-native">Windows Desktop</span>
+            <h1>FORGE2D</h1>
+            <p style="font-size: 0.8rem; color: var(--text-dim);">AI-Powered Puzzle Engine</p>
         </div>
-        <button class="copy-prompt-btn" onclick="copyContext()">AI Talimatını Kopyala</button>
-    </header>
 
-    <!-- AI BURAYI OKUYARAK KENDİSİNİ YÖNETECEK -->
-    <div class="ai-secret-box" id="ai-instructions">
-        <h3><i class="fa-solid fa-robot"></i> AI AGENT PROTOCOL (Sistem Talimatı)</h3>
-        <p>Sen bir Forge2D geliştirme ajanısın. Aşağıdaki adımları izle:</p>
-        <ol>
-            <li>Bu sayfadaki listede <code>is_completed: false</code> olan ilk görevi analiz et.</li>
-            <li>Görevi tamamladıktan sonra şu API bilgilerini kullanarak veritabanını güncelle:</li>
-            <ul>
-                <li><strong>Supabase URL:</strong> <code id="url-text">https://BURAYA_URL_GELECEK.supabase.co</code></li>
-                <li><strong>Anon Key:</strong> <code id="key-text">BURAYA_ANON_KEY_GELECEK</code></li>
-                <li><strong>Action:</strong> <code>UPDATE forge2d_tasks SET is_completed = true WHERE task_key = 'GÖREV_ANAHTARI'</code></li>
-            </ul>
-        </ol>
-    </div>
-
-    <div class="project-meta">
-        <h3><i class="fa-solid fa-circle-info"></i> Proje Özeti</h3>
-        <p>Forge2D; Windows Masaüstü için özelleşmiş bir puzzle oyun motorudur. <strong>Web platformu değildir.</strong></p>
-        <div class="tech-stack">
-            <strong>Stack:</strong> <span>Windows Native</span> <span>Supabase DB</span> <span>Grid Engine</span>
+        <div class="protocol-box">
+            <b style="color: #fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> CRITICAL AI PROTOCOL:</b><br>
+            1. Sadece <b>GÜNCEL (Current)</b> görevi yap.<br>
+            2. Görev bitince DB'de <code>is_completed = true</code> yap.<br>
+            3. <b>ASLA</b> bir sonraki göreve geçme.<br>
+            4. Kod yazarken Windows Native (Electron/Tauri) mimarisine sadık kal.
         </div>
-    </div>
 
-    <div class="step-grid" id="main-grid">
-        <!-- Görevler Javascript ile buraya dinamik dolacak -->
-        <p>Görevler yükleniyor...</p>
-    </div>
-</div>
+        <div class="tech-specs">
+            <h4 style="margin-bottom: 10px; font-size: 0.9rem;">TEKNİK MİMARİ</h4>
+            <div class="tech-spec-item"><b>Core:</b> Windows Desktop App (Tauri/Electron)</div>
+            <div class="tech-spec-item"><b>Grid:</b> Deterministic Rule Engine</div>
+            <div class="tech-spec-item"><b>AI:</b> Claude/GPT Editor Agent Integration</div>
+            <div class="tech-spec-item"><b>Export:</b> Android APK/AAB & AdMob</div>
+            <div class="tech-spec-item"><b>UI:</b> Unity-like Workspace</div>
+        </div>
+
+        <button class="copy-all-btn" onclick="copyAIPrompt()">
+            <i class="fa-solid fa-copy"></i> AI İÇİN PROMPT KOPYALA
+        </button>
+
+        <div id="status-summary" style="font-size: 0.8rem; text-align: center; color: var(--text-dim);">
+            İlerleme: <span id="progress-val">0</span>%
+        </div>
+    </aside>
+
+    <!-- MAIN: GÖREV LİSTESİ -->
+    <main class="main-content">
+        <div id="task-list-render">
+            <!-- Görevler buraya JS ile yüklenecek -->
+            <p>Sistem yükleniyor...</p>
+        </div>
+    </main>
 
 <script>
-    // 1. SUPABASE AYARLARINI BURAYA YAPIŞTIR
-    const SB_URL = "https://okuhawepydbfovcwbnrf.supabase.co"; // Kendi URL'ini yaz
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rdWhhd2VweWRiZm92Y3dibnJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY3MTAsImV4cCI6MjA5MDA0MjcxMH0.4RabtzyvxlQXoEyC9N-wujufz83e4lEsFtDZ1XTzQFA"; // Kendi Anon Key'ini yaz
-
-    document.getElementById('url-text').innerText = SB_URL;
-    document.getElementById('key-text').innerText = SB_KEY;
-
+    // --- SUPABASE CONFIG ---
+    const SB_URL = "https://okuhawepydbfovcwbnrf.supabase.co"; 
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rdWhhd2VweWRiZm92Y3dibnJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NjY3MTAsImV4cCI6MjA5MDA0MjcxMH0.4RabtzyvxlQXoEyC9N-wujufz83e4lEsFtDZ1XTzQFA";
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    // 2. GÖREVLERİ VERİTABANINDAN ÇEK VE GÖRÜNTÜLE
-    async function loadTasks() {
+    let allTasks = [];
+
+    async function loadDashboard() {
         const { data: tasks, error } = await supabaseClient
             .from('forge2d_tasks')
             .select('*')
             .order('id', { ascending: true });
 
         if (error) {
-            console.error("Veri çekme hatası:", error);
+            console.error("Hata:", error);
             return;
         }
 
-        const grid = document.getElementById('main-grid');
-        grid.innerHTML = '';
+        allTasks = tasks;
+        renderTasks(tasks);
+        updateProgress(tasks);
+    }
 
-        // Fazlara göre grupla
+    function renderTasks(tasks) {
+        const container = document.getElementById('task-list-render');
+        container.innerHTML = '';
+
         const phases = [...new Set(tasks.map(t => t.phase))];
+        let foundCurrent = false;
 
-        phases.forEach(phaseName => {
-            const phaseTasks = tasks.filter(t => t.phase === phaseName);
-            const card = document.createElement('div');
-            card.className = 'phase-card';
-            
-            let tasksHtml = phaseTasks.map(t => `
-                <li class="task-item ${t.is_completed ? 'completed' : ''}">
-                    <input type="checkbox" id="${t.task_key}" ${t.is_completed ? 'checked' : ''} 
-                        onclick="toggleTask('${t.task_key}', this.checked)">
-                    <label><strong>[${t.task_key}]</strong> ${t.label}</label>
-                </li>
-            `).join('');
+        phases.forEach(phase => {
+            const phaseTasks = tasks.filter(t => t.phase === phase);
+            const phaseDiv = document.createElement('div');
+            phaseDiv.className = 'phase-container';
+            phaseDiv.innerHTML = `<div class="phase-title"><i class="fa-solid fa-box-archive"></i> ${phase}</div>`;
 
-            card.innerHTML = `
-                <div class="phase-title"><i class="fa-solid fa-layer-group"></i> ${phaseName}</div>
-                <ul class="task-list">${tasksHtml}</ul>
-            `;
-            grid.appendChild(card);
+            phaseTasks.forEach(task => {
+                const isCurrent = !task.is_completed && !foundCurrent;
+                if (isCurrent) foundCurrent = true;
+
+                const taskEl = document.createElement('div');
+                taskEl.className = `task-card ${task.is_completed ? 'completed' : ''} ${isCurrent ? 'current' : ''}`;
+                taskEl.innerHTML = `
+                    <div class="checkbox-custom" onclick="toggleTask('${task.task_key}', ${!task.is_completed})">
+                        ${task.is_completed ? '<i class="fa-solid fa-check"></i>' : (isCurrent ? '<i class="fa-solid fa-arrow-right"></i>' : '')}
+                    </div>
+                    <div class="task-info">
+                        <h4>${task.label}</h4>
+                        <p>${task.description || 'Bu görev için detaylı açıklama tanımlanmamış.'}</p>
+                        ${isCurrent ? '<span class="badge badge-ai" style="margin-top:5px; display:inline-block;">AI ŞU AN BURADA</span>' : ''}
+                    </div>
+                    <div style="font-family:monospace; font-size:0.7rem; color:var(--text-dim)">${task.task_key}</div>
+                `;
+                phaseDiv.appendChild(taskEl);
+            });
+            container.appendChild(phaseDiv);
         });
     }
 
-    // 3. MANUEL TIKLAMA İLE GÜNCELLEME
-    async function toggleTask(taskKey, isChecked) {
+    async function toggleTask(key, status) {
         const { error } = await supabaseClient
             .from('forge2d_tasks')
-            .update({ is_completed: isChecked })
-            .eq('task_key', taskKey);
+            .update({ is_completed: status })
+            .eq('task_key', key);
         
-        if (error) alert("Güncelleme hatası!");
-        loadTasks(); // Sayfayı yenile
+        if (!error) loadDashboard();
     }
 
-    // 4. AI İÇİN BAĞLAM KOPYALAMA
-    function copyContext() {
-        const url = SB_URL;
-        const key = SB_KEY;
-        const prompt = `Forge2D projesine devam ediyoruz. Lütfen şu adrese git: ${window.location.href}. Oradaki görev listesini ve talimatları oku. is_completed: false olan İLK görevi yap. Bilgiler: URL=${url}, Key=${key}.`;
-        
-        navigator.clipboard.writeText(prompt).then(() => {
-            alert("AI Talimatı kopyalandı!");
-        });
+    function updateProgress(tasks) {
+        const completed = tasks.filter(t => t.is_completed).length;
+        const percent = Math.round((completed / tasks.length) * 100);
+        document.getElementById('progress-val').innerText = percent;
     }
 
-    // 5. CANLI DİNLEME (AI GÜNCELLEDİĞİNDE SAYFA DEĞİŞİR)
+    function copyAIPrompt() {
+        const currentTask = allTasks.find(t => !t.is_completed);
+        if (!currentTask) {
+            alert("Tüm görevler tamamlanmış!");
+            return;
+        }
+
+        const prompt = `
+PROJE: Forge2D (Windows Native Puzzle Engine)
+GÖREV: ${currentTask.label} (${currentTask.task_key})
+AÇIKLAMA: ${currentTask.description}
+
+DİKKAT EDİLECEK NOKTALAR:
+1. Bu bir Windows Masaüstü uygulamasıdır (Web değil).
+2. Unity benzeri (Scene, Hierarchy, Inspector, Project, Console) bir editör yapısı kuruyoruz.
+3. Grid sistemi deterministic olmalı (Match-3/Blast/Block Puzzle odaklı).
+4. Sadece bu görevi tamamla ve kodları ver. 
+5. İşlem bitince veritabanında "${currentTask.task_key}" anahtarlı görevi tamamlandı (true) olarak işaretle.
+
+TEKNOLOJİ BAĞLAMI:
+- Supabase DB URL: ${SB_URL}
+- Proje Dosya Sistemi: Local Windows Files
+- AI Agent Role: Editor-Integrated Agent
+
+Lütfen görevi gerçekleştir.
+        `;
+
+        navigator.clipboard.writeText(prompt.trim());
+        alert("AI Hazır! Prompt kopyalandı. Şimdi AI'ya yapıştırın.");
+    }
+
+    // Canlı Takip
     supabaseClient
-        .channel('schema-db-changes')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'forge2d_tasks' }, (payload) => {
-            loadTasks();
+        .channel('db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'forge2d_tasks' }, () => {
+            loadDashboard();
         })
         .subscribe();
 
-    loadTasks();
+    loadDashboard();
 </script>
-
 </body>
 </html>
